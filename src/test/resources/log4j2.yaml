@@ -1,0 +1,21 @@
+Configuration:
+  status: warn
+
+  Appenders:
+    Console:
+      name: Console
+      target: SYSTEM_OUT
+      PatternLayout:
+        Pattern: "%highlight{%-7p %d [%t] %c} - %m%n"
+
+  Loggers:
+    logger:
+      - name: de.zalando.mass.ratpack.demo
+        level: DEBUG
+        additivity: false
+        appenderRef:
+          - ref: Console
+    Root:
+      level: info
+      AppenderRef:
+        ref: Console
