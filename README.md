@@ -7,6 +7,7 @@ Ratpack spring integration with spring-mvc-style request handling
 - [Ratpack current manual](https://ratpack.io/manual/current/)
 - [Ratpack API](https://ratpack.io/manual/current/api/)
 - [Retpack GitHub](https://github.com/ratpack/ratpack)
+- [Java-WebSocket](https://github.com/TooTallNate/Java-WebSocket)
 
 ## Config
 
