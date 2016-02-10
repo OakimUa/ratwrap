@@ -94,6 +94,7 @@ will try to open WebSocket channel with client. `WebSocketHandler` allows you bi
 
 ## ToDo's:
 
+- Javadoc
 - Security integration
   + Integration with [STUPS OAUTH2 support](https://github.com/zalando-stups/stups-spring-oauth2-support)
   + Integration with [STUPS tokens](https://github.com/zalando-stups/tokens) or [Spring access tokens](https://github.com/zalando-stups/spring-boot-zalando-stups-tokens)
