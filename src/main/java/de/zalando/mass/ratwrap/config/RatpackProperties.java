@@ -8,5 +8,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "ratpack", ignoreUnknownFields = false)
 public class RatpackProperties {
   @Value("#{environment.getProperty('server.port')}")
-  private Integer port;
+  private Integer port = 8080;
 }

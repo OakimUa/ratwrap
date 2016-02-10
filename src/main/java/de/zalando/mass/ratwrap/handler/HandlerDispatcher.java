@@ -148,6 +148,7 @@ public class HandlerDispatcher implements Handler {
                 toSSE(h, ctx, stream);
             }
         } else {
+            ctx.getResponse().contentType(h.getHandlerDef().produce());
             ctx.getResponse().status(defStatus);
             render(h, ctx, result);
         }
