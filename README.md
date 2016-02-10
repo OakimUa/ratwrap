@@ -37,6 +37,14 @@ All beans annotated as `@RequestController` will be used for the request handlin
 
 For correct handling, defined request URIs should be unique.
 
+### Request parameters
+
+Each handler method could retrieve parameters:
+- `@PathVariable("entity-id") final Integer id` - parameter from request URI. Should have name as defined in URI: `@RequestHandler(uri = "entities/{entity-id}")`;
+- `@QueryParam("filter-val") final String filter` - query parameter: `HttpClient.get("/entities?filter-val=somevalue")`;
+- `@HeaderParam("etag") final String etag` - injects header value;
+- `@ContextParam final HttpClient httpClient` - will be taken from ratpack context by class. Also context itself could be injected.
+
 ## Response
 
 ### Response type
