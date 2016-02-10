@@ -1,4 +1,4 @@
-package de.zalando.mass.ratwrap.sse;
+package de.zalando.mass.ratwrap.sse.client;
 
 import java.io.Serializable;
 

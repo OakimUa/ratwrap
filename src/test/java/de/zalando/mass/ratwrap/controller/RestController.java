@@ -71,4 +71,15 @@ public class RestController {
                 testRegistryBean != null &&
                 anotherTestRegistryBean != null;
     }
+
+    @RequestHandler(method = RequestMethod.GET, uri = "text", produce = "text/plain")
+    public String doTextResponse() {
+        return "TestValue";
+    }
+
+    @RequestHandler(method = RequestMethod.GET, uri = "custom", produce = "application/x.custom+json")
+    public InputData doCustomJson() {
+        return new InputData("TestValue", 0);
+    }
+
 }

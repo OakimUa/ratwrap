@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class InputData implements Serializable {
     private final String field1;
@@ -32,5 +33,19 @@ public class InputData implements Serializable {
                 .add("field1", field1)
                 .add("field2", field2)
                 .toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof InputData)) return false;
+        InputData inputData = (InputData) o;
+        return Objects.equals(field1, inputData.field1) &&
+                Objects.equals(field2, inputData.field2);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(field1, field2);
     }
 }
