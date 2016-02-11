@@ -94,11 +94,14 @@ will try to open WebSocket channel with client. `WebSocketHandler` allows you bi
 
 ## ToDo's:
 
-- Security integration
-  + Integration with [STUPS OAUTH2 support](https://github.com/zalando-stups/stups-spring-oauth2-support)
-  + Integration with [STUPS tokens](https://github.com/zalando-stups/tokens) or [Spring access tokens](https://github.com/zalando-stups/spring-boot-zalando-stups-tokens)
-- Use bean post processing in for handler dispatch
-- Extend content type support
-- Solve blocking thread issue in SSESubscriber
-- Add client SSE emulation for the long polling. For instance for integration with [Nakadi](https://github.com/zalando/nakadi/)
-- Remove spring-web dependency
+- `[x]` Exception and error handling
+- `[ ]` Javadoc
+- `[x]` Logging
+- `[ ]` Security integration
+  + `[ ]` Integration with [STUPS OAUTH2 support](https://github.com/zalando-stups/stups-spring-oauth2-support)
+  + `[ ]` Integration with [STUPS tokens](https://github.com/zalando-stups/tokens) or [Spring access tokens](https://github.com/zalando-stups/spring-boot-zalando-stups-tokens)
+- `[ ]` Use bean post processing in for handler dispatch
+- `[ ]` Extend content type support
+- `[ ]` Solve blocking thread issue in SSESubscriber
+- `[ ]` Add client SSE emulation for the long polling. For instance for integration with [Nakadi](https://github.com/zalando/nakadi/)
+- `[ ]` Remove spring-web dependency

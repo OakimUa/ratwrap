@@ -2,22 +2,27 @@ package de.zalando.mass.ratwrap.controller;
 
 import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import de.zalando.mass.ratwrap.annotation.RequestHandler;
 import de.zalando.mass.ratwrap.annotation.HeaderParam;
 import de.zalando.mass.ratwrap.annotation.RequestController;
+import de.zalando.mass.ratwrap.annotation.RequestHandler;
 import de.zalando.mass.ratwrap.data.InputData;
 import de.zalando.mass.ratwrap.sse.ClosableBlockingQueue;
 import org.reactivestreams.Publisher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ratpack.stream.Streams;
 
 import java.io.IOException;
 import java.util.Optional;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static de.zalando.mass.ratwrap.enums.RequestMethod.GET;
 
 @RequestController(uri = "streams/")
 public class StreamController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamController.class);
 
     @RequestHandler(method = GET, uri = "regular", eventName = "scheduled_event", eventIdMethod = "getField2")
     public Publisher<InputData> regular(
@@ -27,7 +32,7 @@ public class StreamController {
             if (yieldRequest.getRequestNum() > 9)
                 return null;
 //            TimeUnit.SECONDS.sleep(2);
-            System.out.println("server -> " + yieldRequest.toString());
+            LOGGER.debug("server -> " + yieldRequest.toString());
             return new InputData("" + yieldRequest.getRequestNum() + ":" + yieldRequest.getSubscriberNum(),
                     (int) yieldRequest.getRequestNum() + start + 1);
         });

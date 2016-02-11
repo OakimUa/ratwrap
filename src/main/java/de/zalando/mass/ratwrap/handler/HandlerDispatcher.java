@@ -7,9 +7,12 @@ import de.zalando.mass.ratwrap.enums.RequestMethod;
 import de.zalando.mass.ratwrap.sse.ClosableBlockingQueue;
 import lombok.NonNull;
 import org.reactivestreams.Publisher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.ResponseEntity;
+import org.zalando.problem.Problem;
 import ratpack.exec.Blocking;
 import ratpack.handling.Context;
 import ratpack.handling.Handler;
@@ -21,6 +24,7 @@ import ratpack.websocket.WebSocketHandler;
 import ratpack.websocket.WebSockets;
 
 import javax.annotation.PostConstruct;
+import javax.ws.rs.core.Response;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Arrays;
@@ -35,6 +39,8 @@ import static ratpack.sse.ServerSentEvents.serverSentEvents;
 
 @ServerRegistry
 public class HandlerDispatcher implements Handler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(HandlerDispatcher.class);
+
     @Autowired
     private ApplicationContext context;
     private Map<HttpMethod, Map<Pattern, ControllerHandler>> handlers;
@@ -56,6 +62,7 @@ public class HandlerDispatcher implements Handler {
                         handlers.put(key, new HashMap<>());
                     }
                     final String targetRegexp = HandlerUtils.toRegexp(targetPath);
+                    LOGGER.debug("Handler found: [" + controller.getClass().getSimpleName() + "." + method.getName() + "] " + requestMethod.name() + " " + targetPath);
                     if (handlers.get(key).containsKey(targetRegexp)) {
                         throw new RuntimeException("Duplicate path: " + targetPath);
                     }
@@ -78,6 +85,7 @@ public class HandlerDispatcher implements Handler {
 
         if (handler.isPresent()) {
             final ControllerHandler h = handler.get();
+            LOGGER.debug(ctx.getRequest().getMethod() + " " + ctx.getRequest().getRawUri() + " -> " + h.getController().getClass().getSimpleName() + "." + h.getMethod().getName());
             final Parameter[] parameters = h.getMethod().getParameters();
             final Object[] values = new Object[parameters.length];
             for (int i = 0; i < parameters.length; i++) {
@@ -104,20 +112,36 @@ public class HandlerDispatcher implements Handler {
                 ctx.insert(ctx1 -> callHandler(h, values, ctx1));
             }
         } else {
+            LOGGER.debug(ctx.getRequest().getMethod() + " " + ctx.getRequest().getRawUri() + " -> NEXT [handler not found]");
             ctx.next();
         }
     }
 
     private void callHandler(ControllerHandler h, Object[] values, Context ctx) {
         if (h.getHandlerDef().blocking()) {
-            Blocking.get(() -> h.getMethod().invoke(h.getController(), values))
-                    .then(result -> doResponse(h, ctx, result));
+            Blocking.get(() -> {
+                try {
+                    return h.getMethod().invoke(h.getController(), values);
+                } catch (Exception e) {
+                    LOGGER.warn(e.getCause().getMessage(), e.getCause());
+                    if (e.getCause() instanceof Problem) {
+                        return e.getCause();
+                    } else {
+                        return Problem.valueOf(Response.Status.INTERNAL_SERVER_ERROR, e.getCause().getMessage());
+                    }
+                }
+            }).then(result -> doResponse(h, ctx, result));
         } else {
             Object result;
             try {
                 result = h.getMethod().invoke(h.getController(), values);
             } catch (Exception e) {
-                result = e;
+                LOGGER.error(e.getCause().getMessage(), e.getCause());
+                if (e.getCause() instanceof Problem) {
+                    result = e.getCause();
+                } else {
+                    result = Problem.valueOf(Response.Status.INTERNAL_SERVER_ERROR, e.getCause().getMessage());
+                }
             }
             doResponse(h, ctx, result);
         }
@@ -125,7 +149,12 @@ public class HandlerDispatcher implements Handler {
 
     private void doResponse(ControllerHandler h, Context ctx, Object result) {
         final int defStatus = h.getHandlerDef().status();
-        if (result instanceof ResponseEntity) {
+        if (result instanceof Problem) {
+            Problem problem = (Problem) result;
+            ctx.getResponse().status(problem.getStatus().getStatusCode());
+            ctx.getResponse().contentType("application/problem+json");
+            ctx.render(json(problem));
+        } else if (result instanceof ResponseEntity) {
             ResponseEntity responseEntity = (ResponseEntity) result;
             ctx.getResponse().status(responseEntity.getStatusCode().value());
             responseEntity.getHeaders().toSingleValueMap().entrySet().stream()
@@ -147,6 +176,8 @@ public class HandlerDispatcher implements Handler {
             } else {
                 toSSE(h, ctx, stream);
             }
+        } else if (result instanceof Throwable) {
+            doResponse(h, ctx, Problem.valueOf(Response.Status.INTERNAL_SERVER_ERROR, ((Throwable) result).getMessage()));
         } else {
             ctx.getResponse().contentType(h.getHandlerDef().produce());
             ctx.getResponse().status(defStatus);

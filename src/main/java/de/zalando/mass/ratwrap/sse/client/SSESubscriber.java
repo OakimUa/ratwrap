@@ -8,6 +8,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.StreamUtils;
 
 import java.io.IOException;
@@ -17,6 +19,8 @@ import java.util.List;
 import java.util.concurrent.*;
 
 public class SSESubscriber<T extends Serializable> implements Subscriber<ByteBuf>, EventReceiver<T> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SSESubscriber.class);
+
     protected static final int BULK_SIZE = 1;
     protected static final int QUEUE_SIZE = 100;
     protected static final String EVENT_TOKEN = "event:";
@@ -64,14 +68,14 @@ public class SSESubscriber<T extends Serializable> implements Subscriber<ByteBuf
 
     private Boolean fetchQueue() {
         try {
-            System.out.println("|+++> start fetching queue");
+            LOGGER.debug("|+++> start fetching queue");
             String idToken = null;
             String eventToken = null;
             Integer retryToken = null;
             String dataToken = "";
             while (isRunning() || !lineBuffer.isEmpty()) {
                 final String line = lineBuffer.take();
-//                System.out.println("|==> " + line);
+                LOGGER.debug("|==> " + line);
                 if (Strings.isNullOrEmpty(line) || line.equals(SEPARATOR_TOKEN) || line.equals(POISON_TOKEN)) {
                     if (!Strings.isNullOrEmpty(dataToken)) {
                         try {
@@ -80,7 +84,7 @@ public class SSESubscriber<T extends Serializable> implements Subscriber<ByteBuf
                                     eventToken,
                                     retryToken,
                                     objectMapper.readValue(dataToken, targetClass));
-//                            System.out.println("|==< " + httpEvent.toString());
+                            LOGGER.debug("|==< " + httpEvent.toString());
                             eventBuffer.put(httpEvent);
                             idToken = null;
                             eventToken = null;
@@ -106,7 +110,7 @@ public class SSESubscriber<T extends Serializable> implements Subscriber<ByteBuf
                     }
                 }
             }
-            System.out.println("|+++< stop fetching queue");
+            LOGGER.debug("|+++< stop fetching queue");
         } catch (InterruptedException e) {
             e.printStackTrace();
             return false;
@@ -122,7 +126,7 @@ public class SSESubscriber<T extends Serializable> implements Subscriber<ByteBuf
             subscription.request(BULK_SIZE);
             final byte[] bytes = StreamUtils.copyToByteArray(bbis);
             final String event = new String(bytes).replace("\n\n","\nEVENT_SEPARATOR\n");
-//            System.out.println("|--> " + event.replace("\n", " | "));
+            LOGGER.debug("|--> " + event.replace("\n", " | "));
             final List<String> lines = Arrays.asList(event.split("\n"));
             lineBuffer.addAll(lines);
         } catch (IOException e) {
@@ -139,7 +143,7 @@ public class SSESubscriber<T extends Serializable> implements Subscriber<ByteBuf
             e.printStackTrace();
         }
         running = false;
-        System.out.println("On Error --> " + throwable.getMessage());
+        LOGGER.debug("On Error --> " + throwable.getMessage());
         throwable.printStackTrace();
     }
 
@@ -151,7 +155,7 @@ public class SSESubscriber<T extends Serializable> implements Subscriber<ByteBuf
             e.printStackTrace();
         }
         running = false;
-        System.out.println("On Complete --> ");
+        LOGGER.debug("On Complete --> ");
     }
 
 }
