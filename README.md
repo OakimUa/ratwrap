@@ -61,10 +61,11 @@ By default, operation is `Blocking`, that means server will do response in a dif
 
 ### Server Sent Events
 
-If handler returns `ClosableBlockingQueue` or `Publisher` (with `@RequestHandler(webSocketBroadcasting = false)`) then
-response will be converted to [Server Sent Events](https://ratpack.io/manual/current/streams.html#server_sent_events).
-In this case you can define event name and event id with `@RequestHandler(eventName = "...", eventIdMethod="...")`.
-By default, event name is method name and event id method is `toString()`.
+If handler returns `ClosableBlockingQueue` or `Publisher` with 
+`@RequestHandler(longResponseType = SERVER_SENT_EVENTS)` (which is by default) then response will be converted to
+[Server Sent Events](https://ratpack.io/manual/current/streams.html#server_sent_events).
+In this case you can define event name and event id with `@SSEParams(eventName = "...", eventIdMethod="...")`.
+By default, event name is method name and event id method is `toString`.
 
 #### Client SSE subscribing
 
@@ -86,20 +87,37 @@ while (!(event = subscriber.next()).isPoison()) {
 }
 ```
 
+### Long polling
+
+If handler returns `ClosableBlockingQueue` or `Publisher` with 
+`@RequestHandler(longResponseType = JSON_LONG_POLLING)` then response will be sent as a sequence of type-similar json
+objects separated by `\n`.
+
+#### Client LP subscribing
+
+For processing SSE on java client side you can use `LPSubscriber`. Consuming events from subscriber the same as for 
+`SSESubscriber` - should be executed in different stream with subscription. It will also return `HttpEvent<T>`, but
+event id, event name and retry will be null all the time.
+
 ### Websocket communication
 
-If handler returns `WebSocketHandler` or `Publisher` (with `@RequestHandler(webSocketBroadcasting = true)`) then server
-will try to open WebSocket channel with client. `WebSocketHandler` allows you bi-directional communication and
-`Publisher` with `@RequestHandler(webSocketBroadcasting = true)` makes message broadcasting via WebSocket.
+If handler returns `WebSocketHandler` or `ClosableBlockingQueue`, `Publisher` with 
+`@RequestHandler(longResponseType = WEBSOCKET_BROADCAST)` then server will try to open WebSocket channel with client.
+`WebSocketHandler` allows you bi-directional communication without longResponseType specification.
+`ClosableBlockingQueue` and `Publisher` with `@RequestHandler(longResponseType = WEBSOCKET_BROADCAST)` makes message
+broadcasting via WebSocket.
 
 ## ToDo's:
 
-- Javadoc
-- Security integration
-  + Integration with [STUPS OAUTH2 support](https://github.com/zalando-stups/stups-spring-oauth2-support)
-  + Integration with [STUPS tokens](https://github.com/zalando-stups/tokens) or [Spring access tokens](https://github.com/zalando-stups/spring-boot-zalando-stups-tokens)
-- Use bean post processing in for handler dispatch
-- Extend content type support
-- Solve blocking thread issue in SSESubscriber
-- Add client SSE emulation for the long polling. For instance for integration with [Nakadi](https://github.com/zalando/nakadi/)
-- Remove spring-web dependency
+- `[x]` Exception and error handling
+- `[ ]` Javadoc
+- `[x]` Logging
+- `[ ]` Security integration
+  + `[ ]` Integration with [STUPS OAUTH2 support](https://github.com/zalando-stups/stups-spring-oauth2-support)
+  + `[ ]` Integration with [STUPS tokens](https://github.com/zalando-stups/tokens) or [Spring access tokens](https://github.com/zalando-stups/spring-boot-zalando-stups-tokens)
+- `[ ]` Use bean post processing in HandlerDispatcher for handler dispatch
+- `[ ]` Use bean post processing in serverRegistryBuilder() for adding registry dispatch
+- `[ ]` Extend content type support
+- `[ ]` Solve blocking thread issue in AbstractLongResponseSubscriber
+- `[x]` Add client SSE emulation for the long polling. For instance for integration with [Nakadi](https://github.com/zalando/nakadi/)
+- `[ ]` Remove spring-web dependency

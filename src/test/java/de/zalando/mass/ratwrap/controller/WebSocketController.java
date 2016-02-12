@@ -1,12 +1,15 @@
 package de.zalando.mass.ratwrap.controller;
 
 import com.google.common.primitives.Ints;
-import de.zalando.mass.ratwrap.annotation.RequestHandler;
 import de.zalando.mass.ratwrap.annotation.QueryParam;
 import de.zalando.mass.ratwrap.annotation.RequestController;
+import de.zalando.mass.ratwrap.annotation.RequestHandler;
 import de.zalando.mass.ratwrap.data.InputData;
+import de.zalando.mass.ratwrap.enums.LongResponseType;
+import de.zalando.mass.ratwrap.sse.ClosableBlockingQueue;
 import org.reactivestreams.Publisher;
-import ratpack.stream.Streams;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ratpack.websocket.WebSocketHandler;
 import ratpack.websocket.internal.BuiltWebSocketHandler;
 
@@ -16,22 +19,23 @@ import static de.zalando.mass.ratwrap.enums.RequestMethod.GET;
 
 @RequestController(uri = "sockets/")
 public class WebSocketController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketController.class);
 
-    @RequestHandler(method = GET, uri = "regular", eventName = "scheduled_event", eventIdMethod = "getField2")
+    @RequestHandler(method = GET, uri = "regular")
     public WebSocketHandler<Boolean> regular() {
         return new BuiltWebSocketHandler<>(
                 webSocket -> {
-                    System.out.println("|--> server onOpen: ");
+                    LOGGER.debug("|--> server onOpen: ");
                     return true;
                 },
                 webSocketClose -> {
-                    System.out.println("|--> server onClose: " +
+                    LOGGER.debug("|--> server onClose: " +
                             "fromClient = " + webSocketClose.isFromClient() +
                             ", fromServer = " + webSocketClose.isFromServer() +
                             ", openResult = " + webSocketClose.getOpenResult().toString());
                 },
                 webSocketMessage -> {
-                    System.out.println("|--> server onMessage: " +
+                    LOGGER.debug("|--> server onMessage: " +
                             "text = " + webSocketMessage.getText() +
                             ", openResult = " + webSocketMessage.getOpenResult());
                     final String text = webSocketMessage.getText();
@@ -48,17 +52,16 @@ public class WebSocketController {
         );
     }
 
-
-    @RequestHandler(method = GET, uri = "broadcast", webSocketBroadcasting = true)
+    @RequestHandler(method = GET, uri = "broadcast", longResponseType = LongResponseType.WEBSOCKET_BROADCAST)
     public Publisher<InputData> broadcast(
             @QueryParam("startWith") final String lastEventID) {
         int start = Ints.tryParse(Optional.ofNullable(lastEventID).orElse("-1"));
-        return Streams.yield(yieldRequest -> {
-            if (yieldRequest.getRequestNum() > 9)
-                return null;
-            System.out.println("server -> " + yieldRequest.toString());
-            return new InputData("" + yieldRequest.getRequestNum() + ":" + yieldRequest.getSubscriberNum(),
-                    (int) yieldRequest.getRequestNum() + start + 1);
-        });
+        return Utils.testPublisher(start, LOGGER);
+    }
+    @RequestHandler(method = GET, uri = "queued", longResponseType = LongResponseType.WEBSOCKET_BROADCAST)
+    public ClosableBlockingQueue<InputData> queued(
+            @QueryParam("startWith") final String lastEventID) {
+        int start = Ints.tryParse(Optional.ofNullable(lastEventID).orElse("-1"));
+        return Utils.testQueue(start);
     }
 }

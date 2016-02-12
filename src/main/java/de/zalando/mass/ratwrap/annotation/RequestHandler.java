@@ -1,5 +1,6 @@
 package de.zalando.mass.ratwrap.annotation;
 
+import de.zalando.mass.ratwrap.enums.LongResponseType;
 import de.zalando.mass.ratwrap.enums.RequestMethod;
 
 import java.lang.annotation.ElementType;
@@ -22,20 +23,8 @@ public @interface RequestHandler {
     boolean blocking() default true;
 
     /**
-     * event name for event streaming
+     * Response method for Publisher and ClosableBlockingQueue
      * @return
      */
-    String eventName() default "";
-
-    /**
-     * Method in returned data o calculate event id
-     * @return
-     */
-    String eventIdMethod() default "toString";
-
-    /**
-     * should open WebSocket connection instead SSE
-     * @return
-     */
-    boolean webSocketBroadcasting() default false;
+    LongResponseType longResponseType() default LongResponseType.SERVER_SENT_EVENTS;
 }

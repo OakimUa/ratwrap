@@ -12,6 +12,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.zalando.problem.ProblemModule;
 import ratpack.registry.Registry;
 import ratpack.registry.RegistryBuilder;
 import ratpack.server.RatpackServer;
@@ -39,7 +40,9 @@ public class HandlerDispatcherConfig {
     @Bean
     @ConditionalOnMissingBean(ObjectMapper.class)
     public ObjectMapper objectMapper() {
-        return new ObjectMapper().registerModule(new Jdk8Module());
+        return new ObjectMapper()
+                .registerModule(new Jdk8Module())
+                .registerModule(new ProblemModule());
     }
 
     @Bean

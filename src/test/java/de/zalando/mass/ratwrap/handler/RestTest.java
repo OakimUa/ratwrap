@@ -3,11 +3,14 @@ package de.zalando.mass.ratwrap.handler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.zalando.mass.ratwrap.TestApplication;
 import de.zalando.mass.ratwrap.data.InputData;
+import de.zalando.mass.ratwrap.util.TestUtils;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.http.HttpStatus;
@@ -24,6 +27,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = TestApplication.class)
 public class RestTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RestTest.class);
 
     @Autowired
     private RatpackServer server;
@@ -43,10 +47,10 @@ public class RestTest {
         ApplicationUnderTest.of(server)
                 .test(testHttpClient -> {
                     final ReceivedResponse response = testHttpClient.get("/test/data1/context");
+                    TestUtils.logResponse(LOGGER, response, "/test/data1/context");
                     assertEquals(HttpStatus.OK.value(), response.getStatusCode());
                     final String resp = response.getBody().getText();
                     assertEquals("HttpClient=true|ObjectMapper=true|Context=true", resp);
-                    System.out.println(resp);
                 });
     }
 
@@ -55,6 +59,7 @@ public class RestTest {
         ApplicationUnderTest.of(server)
                 .test(testHttpClient -> {
                     final ReceivedResponse response = testHttpClient.get("/test/data1/registry");
+                    TestUtils.logResponse(LOGGER, response, "/test/data1/registry");
                     assertEquals(HttpStatus.OK.value(), response.getStatusCode());
                     assertTrue(Boolean.parseBoolean(response.getBody().getText()));
                 });
@@ -68,6 +73,7 @@ public class RestTest {
                     final ReceivedResponse response = testHttpClient
                             .requestSpec(requestSpec -> requestSpec.getHeaders().add("param4", "headerValue"))
                             .get("/test/data1/path/15?param3=qwerty");
+                    TestUtils.logResponse(LOGGER, response, "/test/data1/path/15?param3=qwerty");
                     assertEquals(HttpStatus.OK.value(), response.getStatusCode());
                     assertEquals("application/json", response.getHeaders().get(HttpHeaderNames.CONTENT_TYPE));
                     final Map resp = objectMapper.readValue(response.getBody().getInputStream(), Map.class);
@@ -75,7 +81,6 @@ public class RestTest {
                     assertEquals(15, resp.get("param2"));
                     assertEquals("qwerty", resp.get("param3"));
                     assertEquals("headerValue", resp.get("param4"));
-                    System.out.println(resp);
                 });
     }
 
@@ -86,11 +91,11 @@ public class RestTest {
                 .test(testHttpClient -> {
                     final ReceivedResponse response = testHttpClient
                             .get("/test/data1/path202/15");
+                    TestUtils.logResponse(LOGGER, response, "/test/data1/path202/15");
                     assertEquals(HttpStatus.ACCEPTED.value(), response.getStatusCode());
                     final Map resp = objectMapper.readValue(response.getBody().getInputStream(), Map.class);
                     assertEquals("data1", resp.get("param1"));
                     assertEquals(15, resp.get("param2"));
-                    System.out.println(resp);
                 });
     }
 
@@ -105,6 +110,7 @@ public class RestTest {
                                             .type("application/json")
                                             .bytes(objectMapper.writeValueAsBytes(new InputData("f1", 10)))))
                             .post("/test/data1/path/15");
+                    TestUtils.logResponse(LOGGER, response, "/test/data1/path/15");
                     assertEquals(HttpStatus.CREATED.value(), response.getStatusCode());
                     assertEquals("path/to/entity/data1/15/f1/10", response.getHeaders().get("Location"));
                 });
@@ -114,13 +120,12 @@ public class RestTest {
     public void testTextResponse() throws Exception {
         ApplicationUnderTest.of(server)
                 .test(testHttpClient -> {
-                    final ReceivedResponse response = testHttpClient
-                            .get("/test/data1/text");
+                    final ReceivedResponse response = testHttpClient.get("/test/data1/text");
+                    TestUtils.logResponse(LOGGER, response, "/test/data1/text");
                     assertEquals(HttpStatus.OK.value(), response.getStatusCode());
                     assertEquals("text/plain", response.getHeaders().get(HttpHeaderNames.CONTENT_TYPE));
                     final String resp = response.getBody().getText();
                     assertEquals("TestValue", resp);
-                    System.out.println(resp);
                 });
     }
 
@@ -129,13 +134,12 @@ public class RestTest {
         ObjectMapper objectMapper = new ObjectMapper();
         ApplicationUnderTest.of(server)
                 .test(testHttpClient -> {
-                    final ReceivedResponse response = testHttpClient
-                            .get("/test/data1/custom");
+                    final ReceivedResponse response = testHttpClient.get("/test/data1/custom");
+                    TestUtils.logResponse(LOGGER, response, "/test/data1/custom");
                     assertEquals(HttpStatus.OK.value(), response.getStatusCode());
                     assertEquals("application/x.custom+json", response.getHeaders().get(HttpHeaderNames.CONTENT_TYPE));
                     final InputData resp = objectMapper.readValue(response.getBody().getInputStream(), InputData.class);
                     assertEquals(new InputData("TestValue", 0), resp);
-                    System.out.println(resp.toString());
                 });
     }
 }

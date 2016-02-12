@@ -6,11 +6,11 @@ Configuration:
       name: Console
       target: SYSTEM_OUT
       PatternLayout:
-        Pattern: "%highlight{%-7p %d [%t] %c} - %m%n"
+        Pattern: "%highlight{%-7p %d [%10.10t] %-60.60c} - %m%n"
 
   Loggers:
     logger:
-      - name: de.zalando.mass.ratpack.demo
+      - name: de.zalando.mass.ratwrap
         level: DEBUG
         additivity: false
         appenderRef:
