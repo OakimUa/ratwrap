@@ -108,13 +108,19 @@ public class WebSocketTest {
         checkWebSocketBroadcast(URI.create("http://localhost:" + server.getBindPort() + "/sockets/broadcast?startWith=5"), 15);
     }
 
+    @Test
+    public void testQueueBroadcast() throws Exception {
+        checkWebSocketBroadcast(URI.create("http://localhost:" + server.getBindPort() + "/sockets/queued"), 9);
+        checkWebSocketBroadcast(URI.create("http://localhost:" + server.getBindPort() + "/sockets/queued?startWith=5"), 15);
+    }
+
     private void checkWebSocketBroadcast(URI uri, int expectedEnd) throws Exception {
         CompletableFuture<WebSocketResult> future = new CompletableFuture<>();
         WebSocketClient wsc = new TestWebSocket(uri, new Draft_17(), null, 5, future);
-        assertTrue(wsc.connectBlocking());
+        wsc.connect();
         final WebSocketResult webSocketResult = future.get(5, TimeUnit.SECONDS);
         assertThat(webSocketResult.getStatus(), is(1000));
-        assertThat(webSocketResult.getData(), is("{\"field1\":\"9:0\",\"field2\":" + expectedEnd + "}"));
+        assertThat(webSocketResult.getData(), is("{\"field1\":\"data\",\"field2\":" + expectedEnd + "}"));
     }
 
     @Data

@@ -1,7 +1,5 @@
 package de.zalando.mass.ratwrap.sse.client;
 
-import java.io.Serializable;
-
-public interface EventReceiver<T extends Serializable> {
+public interface EventReceiver<T> {
     HttpEvent<T> next() throws InterruptedException;
 }

@@ -1,10 +1,11 @@
 package de.zalando.mass.ratwrap.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Strings;
 import de.zalando.mass.ratwrap.annotation.*;
 import de.zalando.mass.ratwrap.enums.RequestMethod;
 import de.zalando.mass.ratwrap.sse.ClosableBlockingQueue;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import lombok.NonNull;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
@@ -17,7 +18,6 @@ import ratpack.exec.Blocking;
 import ratpack.handling.Context;
 import ratpack.handling.Handler;
 import ratpack.http.HttpMethod;
-import ratpack.sse.ServerSentEvents;
 import ratpack.stream.Streams;
 import ratpack.stream.TransformablePublisher;
 import ratpack.websocket.WebSocketHandler;
@@ -25,7 +25,6 @@ import ratpack.websocket.WebSockets;
 
 import javax.annotation.PostConstruct;
 import javax.ws.rs.core.Response;
-import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -35,7 +34,6 @@ import java.util.regex.Pattern;
 
 import static java.util.stream.Collectors.toMap;
 import static ratpack.jackson.Jackson.json;
-import static ratpack.sse.ServerSentEvents.serverSentEvents;
 
 @ServerRegistry
 public class HandlerDispatcher implements Handler {
@@ -165,16 +163,44 @@ public class HandlerDispatcher implements Handler {
             WebSockets.websocket(ctx, webSocketHandler);
         } else if (result instanceof ClosableBlockingQueue) {
             ClosableBlockingQueue<?> queue = (ClosableBlockingQueue) result;
-            final TransformablePublisher<Object> stream = Streams.yield(yieldRequest -> queue.maybeTake().orElse(null));
-            toSSE(h, ctx, stream);
+            switch (h.getHandlerDef().longResponseType()) {
+                case WEBSOCKET_BROADCAST:
+                    WebSockets.websocketBroadcast(ctx,
+                            Streams.yield(yieldRequest -> queue.maybeTake().orElse(null))
+                                    .map(o -> ctx.get(ObjectMapper.class).writeValueAsString(o)));
+                    break;
+                case JSON_LONG_POLLING:
+                    final TransformablePublisher<ByteBuf> publisher = Streams.yield(yieldRequest -> queue.maybeTake().orElse(null))
+                            .map(o -> ctx.get(ObjectMapper.class).writeValueAsString(o))
+                            .map(data -> HandlerUtils.transformStringToByteBuf(data, ctx.get(ByteBufAllocator.class)));
+                    ctx.getResponse().contentType(h.getHandlerDef().produce());
+                    ctx.getResponse().sendStream(publisher);
+                    break;
+                case SERVER_SENT_EVENTS:
+                default:
+                    final TransformablePublisher<Object> stream = Streams.yield(yieldRequest -> queue.maybeTake().orElse(null));
+                    HandlerUtils.toSSE(h, ctx, stream);
+                    break;
+            }
         } else if (result instanceof Publisher) {
             Publisher<?> stream = (Publisher) result;
-            if (h.getHandlerDef().webSocketBroadcasting()) {
-                WebSockets.websocketBroadcast(ctx,
-                        Streams.transformable(stream)
-                                .map(o -> ctx.get(ObjectMapper.class).writeValueAsString(o)));
-            } else {
-                toSSE(h, ctx, stream);
+            switch (h.getHandlerDef().longResponseType()) {
+                case WEBSOCKET_BROADCAST:
+                    WebSockets.websocketBroadcast(ctx,
+                            Streams.transformable(stream)
+                                    .map(o -> ctx.get(ObjectMapper.class).writeValueAsString(o)));
+                    break;
+                case JSON_LONG_POLLING:
+                    final TransformablePublisher<ByteBuf> publisher = Streams.transformable(stream)
+                            .map(o -> ctx.get(ObjectMapper.class).writeValueAsString(o))
+                            .map(data -> HandlerUtils.transformStringToByteBuf(data, ctx.get(ByteBufAllocator.class)));
+                    ctx.getResponse().contentType(h.getHandlerDef().produce());
+                    ctx.getResponse().sendStream(publisher);
+                    break;
+                case SERVER_SENT_EVENTS:
+                default:
+                    HandlerUtils.toSSE(h, ctx, stream);
+                    break;
             }
         } else if (result instanceof Throwable) {
             doResponse(h, ctx, Problem.valueOf(Response.Status.INTERNAL_SERVER_ERROR, ((Throwable) result).getMessage()));
@@ -194,27 +220,6 @@ public class HandlerDispatcher implements Handler {
             ctx.render(json(body));
         } else {
             ctx.render(body.toString());
-        }
-    }
-
-    private void toSSE(ControllerHandler h, Context ctx, Publisher<?> stream) {
-        final String eventName = Strings.isNullOrEmpty(h.getHandlerDef().eventName()) ?
-                h.getMethod().getName() :
-                h.getHandlerDef().eventName();
-        ServerSentEvents events = serverSentEvents(stream, e -> e
-                .id(o -> getEventId(o, h.getHandlerDef().eventIdMethod()))
-                .event(eventName)
-                .data(i -> ctx.get(ObjectMapper.class).writeValueAsString(i)));
-        ctx.render(events);
-    }
-
-    @NonNull
-    private String getEventId(@NonNull final Object o, @NonNull final String methodName) {
-        try {
-            final Method method = o.getClass().getMethod(methodName);
-            return method.invoke(o).toString();
-        } catch (Exception e) {
-            return o.toString();
         }
     }
 

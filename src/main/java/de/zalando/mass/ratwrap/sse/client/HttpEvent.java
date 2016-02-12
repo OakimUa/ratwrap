@@ -1,19 +1,19 @@
 package de.zalando.mass.ratwrap.sse.client;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
-
-import java.io.Serializable;
 
 @Data
 @ToString
-public class HttpEvent<T extends Serializable> {
+@EqualsAndHashCode
+public class HttpEvent<T> {
     private final String id;
     private final String event;
     private final Integer retry;
     private final T data;
 
     public boolean isPoison() {
-        return id == null && event == null && retry == null && data == null;
+        return false;
     }
 }
