@@ -4,6 +4,9 @@ import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.*;
 
+/**
+ * Enables ratpack via adding configuration to the project
+ */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
