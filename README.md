@@ -45,6 +45,20 @@ Each handler method could retrieve parameters:
 - `@HeaderParam("etag") final String etag` - injects header value;
 - `@ContextParam final HttpClient httpClient` - will be taken from ratpack context by class. Also context itself could be injected.
 
+### Request filter
+
+All beans implemented `RequestFilter` will be called to handle request before request handler. With `@FilterUri`
+you can specify uri prefix.
+To continue request processing filter should call `ctx.next()`, otherwise response will be sent to the client.
+
+```
+if (condition) {
+    throw Problem.valueOf(Response.Status.FORBIDDEN);
+} else {
+    ctx.next();
+}
+```
+
 ## Response
 
 ### Response type

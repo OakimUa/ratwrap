@@ -3,6 +3,7 @@ package de.zalando.mass.ratwrap.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import de.zalando.mass.ratwrap.annotation.ServerRegistry;
+import de.zalando.mass.ratwrap.handler.FilterDispatcher;
 import de.zalando.mass.ratwrap.handler.HandlerDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +39,11 @@ public class HandlerDispatcherConfig {
     }
 
     @Bean
+    public FilterDispatcher filterDispatcher() {
+        return new FilterDispatcher();
+    }
+
+    @Bean
     @ConditionalOnMissingBean(ObjectMapper.class)
     public ObjectMapper objectMapper() {
         return new ObjectMapper()
@@ -49,9 +55,11 @@ public class HandlerDispatcherConfig {
     @Autowired
     public RatpackServer server(Registry registry) throws Exception {
         return RatpackServer.start(server -> server
-                .serverConfig(serverConfig())
-                .registry(registry)
-                .handler(HandlerDispatcher.class));
+                        .serverConfig(serverConfig())
+                        .registry(registry)
+                        .handlers(chain -> chain
+                                .all(filterDispatcher())
+                                .all(handlerDispatcher())));
     }
 
     @Bean
