@@ -1,10 +1,14 @@
 package de.zalando.mass.ratwrap.config;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import de.zalando.mass.ratwrap.annotation.ServerRegistry;
 import de.zalando.mass.ratwrap.handler.FilterDispatcher;
 import de.zalando.mass.ratwrap.handler.HandlerDispatcher;
+import de.zalando.mass.ratwrap.handler.ProblemHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +18,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.zalando.problem.ProblemModule;
+import ratpack.error.ServerErrorHandler;
 import ratpack.registry.Registry;
 import ratpack.registry.RegistryBuilder;
 import ratpack.server.RatpackServer;
@@ -48,7 +53,10 @@ public class HandlerDispatcherConfig {
     public ObjectMapper objectMapper() {
         return new ObjectMapper()
                 .registerModule(new Jdk8Module())
-                .registerModule(new ProblemModule());
+                .registerModule(new ProblemModule())
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .setPropertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
     }
 
     @Bean
@@ -89,4 +97,11 @@ public class HandlerDispatcherConfig {
                 .port(ratpack.getPort())
                 .build();
     }
+
+    @Bean
+    @ConditionalOnMissingBean(ServerErrorHandler.class)
+    public ServerErrorHandler errorHandler() {
+        return new ProblemHandler();
+    }
+
 }

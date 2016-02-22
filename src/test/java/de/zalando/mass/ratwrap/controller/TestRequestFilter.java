@@ -15,7 +15,7 @@ public class TestRequestFilter implements RequestFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRequestFilter.class);
 
     @Override
-    @FilterUri("filtered")
+    @FilterUri("/filtered/**")
     public void handle(Context ctx) {
         LOGGER.debug("TestRequestFilter");
         ctx.getResponse().getHeaders().add("x-request-filter", "done");

@@ -41,6 +41,10 @@ public class HandlerDispatcher implements Handler {
 
     @Autowired
     private ApplicationContext context;
+
+    @Autowired
+    private FilterDispatcher filterDispatcher;
+
     private Map<HttpMethod, Map<Pattern, ControllerHandler>> handlers;
 
     // TODO: do with BeanPostProcessor
@@ -48,24 +52,36 @@ public class HandlerDispatcher implements Handler {
     public void init() {
         Map<HttpMethod, Map<String, ControllerHandler>> handlers = new HashMap<>();
         final Map<String, Object> controllers = context.getBeansWithAnnotation(RequestController.class);
-        controllers.values().stream().forEach(controller -> Arrays.asList(controller.getClass().getMethods()).stream()
-                .filter(method -> method.isAnnotationPresent(RequestHandler.class))
-                .forEach(method -> {
-                    final RequestController requestControllerAnnotation = controller.getClass().getAnnotation(RequestController.class);
-                    final RequestHandler handlerAnnotation = method.getAnnotation(RequestHandler.class);
-                    final String targetPath = requestControllerAnnotation.uri() + handlerAnnotation.uri();
-                    final RequestMethod requestMethod = handlerAnnotation.method();
-                    final HttpMethod key = requestMethod.toHttpMethod();
-                    if (!handlers.containsKey(key)) {
-                        handlers.put(key, new HashMap<>());
-                    }
-                    final String targetRegexp = HandlerUtils.toRegexp(targetPath);
-                    LOGGER.debug("Handler found: [" + controller.getClass().getSimpleName() + "." + method.getName() + "] " + requestMethod.name() + " " + targetPath);
-                    if (handlers.get(key).containsKey(targetRegexp)) {
-                        throw new RuntimeException("Duplicate path: " + targetPath);
-                    }
-                    handlers.get(key).put(targetRegexp, new ControllerHandler(requestControllerAnnotation, handlerAnnotation, controller, method));
-                }));
+        controllers.values().stream().forEach(controller -> {
+            final RequestController requestControllerAnnotation = controller.getClass().getAnnotation(RequestController.class);
+            if (controller.getClass().isAnnotationPresent(Filtered.class)) {
+                Arrays.asList(controller.getClass().getAnnotation(Filtered.class).value())
+                        .forEach(filterClass -> filterDispatcher.addFilter(
+                                requestControllerAnnotation.uri()+"**", filterClass));
+            }
+            Arrays.asList(controller.getClass().getMethods()).stream()
+                    .filter(method -> method.isAnnotationPresent(RequestHandler.class))
+                    .forEach(method -> {
+                        final RequestHandler handlerAnnotation = method.getAnnotation(RequestHandler.class);
+                        final String targetPath = requestControllerAnnotation.uri() + handlerAnnotation.uri();
+                        final RequestMethod requestMethod = handlerAnnotation.method();
+                        final HttpMethod key = requestMethod.toHttpMethod();
+                        if (!handlers.containsKey(key)) {
+                            handlers.put(key, new HashMap<>());
+                        }
+                        final String targetRegexp = HandlerUtils.toRegexp(targetPath);
+                        LOGGER.debug("Handler found: [" + controller.getClass().getSimpleName() + "." + method.getName() + "] " + requestMethod.name() + " " + targetPath);
+                        if (handlers.get(key).containsKey(targetRegexp)) {
+                            throw new RuntimeException("Duplicate path: " + targetPath);
+                        }
+                        handlers.get(key).put(targetRegexp, new ControllerHandler(requestControllerAnnotation, handlerAnnotation, controller, method));
+                        if (method.isAnnotationPresent(Filtered.class)) {
+                            Arrays.asList(method.getAnnotation(Filtered.class).value())
+                                    .forEach(filterClass -> filterDispatcher.addFilter(
+                                            targetPath, filterClass));
+                        }
+                    });
+        });
         this.handlers = handlers.entrySet().stream()
                 .collect(toMap(
                         Map.Entry::getKey,
@@ -229,9 +245,9 @@ public class HandlerDispatcher implements Handler {
         if (!handlers.containsKey(method)) {
             return Optional.empty();
         }
-        return handlers.get(method).keySet().stream()
-                .filter(pattern -> pattern.matcher(ctx.getRequest().getPath()).matches())
+        return handlers.get(method).entrySet().stream()
+                .filter(entry -> entry.getKey().matcher(ctx.getRequest().getPath()).matches())
                 .findFirst()
-                .map(pattern -> handlers.get(method).get(pattern));
+                .map(Map.Entry::getValue);
     }
 }

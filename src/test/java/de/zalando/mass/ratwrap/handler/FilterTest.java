@@ -79,4 +79,22 @@ public class FilterTest {
                     assertEquals("done", response.getHeaders().get("x-request-filter"));
                 });
     }
+
+    @Test
+    public void testAnnotatedFilters() throws Exception {
+        ApplicationUnderTest.of(server)
+                .test(testHttpClient -> {
+                    final ReceivedResponse response = testHttpClient
+                            .requestSpec(requestSpec -> {})
+                            .get("/filtered/annotated-test");
+                    TestUtils.logResponse(LOGGER, response, "/filtered/test");
+                    assertEquals(HttpStatus.OK.value(), response.getStatusCode());
+                    assertEquals("OK", response.getBody().getText());
+                    assertEquals("done", response.getHeaders().get("x-request-filter"));
+                    assertEquals("done", response.getHeaders().get("x-common-filter"));
+                    assertEquals("done", response.getHeaders().get("x-class-annotated-filter"));
+                    assertEquals("done", response.getHeaders().get("x-annotated-filter"));
+                    assertEquals("done", response.getHeaders().get("x-not-bean-filter"));
+                });
+    }
 }

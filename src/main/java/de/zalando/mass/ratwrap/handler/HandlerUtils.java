@@ -31,9 +31,14 @@ import static ratpack.sse.ServerSentEvents.serverSentEvents;
 class HandlerUtils {
     @NonNull
     static String toRegexp(@NonNull final String pathDef) {
-        if (!pathDef.contains("{"))
-            return pathDef;
-        final String s = pathDef.replaceAll("\\}\\{", "");
+        final String s = pathDef
+                .replaceAll("\\}\\{", "")
+                .replaceAll("\\*\\*", "[dotx]")
+                .replaceAll("\\*", "[a-zA-Z0-9_-]*")
+                .replaceAll("\\[dotx\\]", ".*");
+        if (!s.contains("{")) {
+            return s;
+        }
         final String[] split = s.split("(\\{|\\})");
         int seed = s.startsWith("{") ? 1 : 0;
         for (int i = seed; i < split.length; i++) {
