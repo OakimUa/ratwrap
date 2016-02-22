@@ -1,6 +1,9 @@
 package de.zalando.mass.ratwrap.config;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import de.zalando.mass.ratwrap.annotation.ServerRegistry;
 import de.zalando.mass.ratwrap.handler.FilterDispatcher;
@@ -48,7 +51,10 @@ public class HandlerDispatcherConfig {
     public ObjectMapper objectMapper() {
         return new ObjectMapper()
                 .registerModule(new Jdk8Module())
-                .registerModule(new ProblemModule());
+                .registerModule(new ProblemModule())
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .setPropertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
     }
 
     @Bean

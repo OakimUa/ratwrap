@@ -1,2 +1,5 @@
 ratpack:
   port: 7080
+ratwrap:
+  security:
+    url: http://localhost:8099/oauth2/tokeninfo?access_token=

@@ -1,6 +1,8 @@
 package de.zalando.mass.ratwrap.handler;
 
 import de.zalando.mass.ratwrap.annotation.ServerRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.zalando.problem.Problem;
 import ratpack.error.ServerErrorHandler;
@@ -13,8 +15,10 @@ import static ratpack.jackson.Jackson.json;
 @ServerRegistry
 @Component
 public class ProblemHandler implements ServerErrorHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProblemHandler.class);
     @Override
     public void error(Context ctx, Throwable throwable) throws Exception {
+        LOGGER.warn(throwable.getMessage(), throwable);
         Problem problem;
         if (throwable instanceof Problem) {
             problem = (Problem) throwable;
