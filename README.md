@@ -45,10 +45,12 @@ Each handler method could retrieve parameters:
 - `@HeaderParam("etag") final String etag` - injects header value;
 - `@ContextParam final HttpClient httpClient` - will be taken from ratpack context by class. Also context itself could be injected.
 
-### Request filter
+### Request filtering
 
-All beans implemented `RequestFilter` will be called to handle request before request handler. With `@FilterUri`
-you can specify uri prefix.
+Any request filter still a request handler, but filters will be called before handler execution.
+You can define filter as:
+- Bean implements `RequestFilter` - for specific uri pattern (if `handler` method annotated with `@FilterUri`, otherwise - `/**`).
+- Request handler class or method has annotation `@Filtered`.
 To continue request processing filter should call `ctx.next()`, otherwise response will be sent to the client.
 
 ```
@@ -58,6 +60,44 @@ if (condition) {
     ctx.next();
 }
 ```
+
+All filters are singletone beans independently from the definition method.
+
+#### Filter uri
+
+**When** specifying with `@FilterUri`:
+- `somepath/**` - for URIs that starts with `somepath/`, for instance `somepath/`, `somepath/item`, `somepath/item/15`.
+- `somepath/*` - for URIs that starts with `somepath/` and has one subresource, for instance `somepath/item`, but not `somepath/`, `somepath/item/15`.
+- `somepath/` - exactly `somepath/` uri.
+
+**When** specifying with `@Filtered` on request handler class - request handler class URI:
+
+```
+@RequestController(uri = "somepath/")
+@Filtered(SomeFilter.class)
+public class SecuredController {
+    ...
+}
+```
+
+SomeFilter will be bind to the `somepath/**` uri.
+
+**When** specifying with `@Filtered` on request handler method - request handler method URI:
+
+```
+@RequestController(uri = "res/{rid}/")
+public class SecuredController {
+    @Filtered(SomeFilter.class)
+    @RequestHandler(uri = "subres/{sid}", produce = "text/plain")
+    public String handle(...) {
+        ...
+    }
+}
+```
+
+SomeFilter will be bind to the `res/*/subres/*` uri.
+
+**Filter order**: from more common to more specific.
 
 ## Response
 
@@ -126,8 +166,8 @@ broadcasting via WebSocket.
 - `[x]` Exception and error handling
 - `[ ]` Javadoc
 - `[x]` Logging
-- `[ ]` Security integration
-  + `[ ]` Integration with [STUPS OAUTH2 support](https://github.com/zalando-stups/stups-spring-oauth2-support)
+- `[x]` Security integration
+  + `[x]` Integration with [STUPS OAUTH2 support](https://github.com/zalando-stups/stups-spring-oauth2-support)
   + `[ ]` Integration with [STUPS tokens](https://github.com/zalando-stups/tokens) or [Spring access tokens](https://github.com/zalando-stups/spring-boot-zalando-stups-tokens)
 - `[ ]` Use bean post processing in HandlerDispatcher for handler dispatch
 - `[ ]` Use bean post processing in serverRegistryBuilder() for adding registry dispatch

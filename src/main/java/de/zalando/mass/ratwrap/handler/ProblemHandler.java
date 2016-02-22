@@ -3,7 +3,6 @@ package de.zalando.mass.ratwrap.handler;
 import de.zalando.mass.ratwrap.annotation.ServerRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.zalando.problem.Problem;
 import ratpack.error.ServerErrorHandler;
 import ratpack.handling.Context;
@@ -13,7 +12,6 @@ import javax.ws.rs.core.Response;
 import static ratpack.jackson.Jackson.json;
 
 @ServerRegistry
-@Component
 public class ProblemHandler implements ServerErrorHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProblemHandler.class);
     @Override
