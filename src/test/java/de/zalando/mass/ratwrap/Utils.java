@@ -1,4 +1,4 @@
-package de.zalando.mass.ratwrap.controller;
+package de.zalando.mass.ratwrap;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.zalando.mass.ratwrap.data.InputData;

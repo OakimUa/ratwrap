@@ -1,6 +1,7 @@
 package de.zalando.mass.ratwrap.controller;
 
 import com.google.common.primitives.Ints;
+import de.zalando.mass.ratwrap.Utils;
 import de.zalando.mass.ratwrap.annotation.QueryParam;
 import de.zalando.mass.ratwrap.annotation.RequestController;
 import de.zalando.mass.ratwrap.annotation.RequestHandler;

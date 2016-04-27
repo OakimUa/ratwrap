@@ -71,7 +71,7 @@ public class HandlerDispatcherConfig {
     }
 
     @Bean
-    public RegistryBuilder serverRegistryBuilder() {
+    public RegistryBuilder serverRegistryBuilder(ServerErrorHandler errorHandler) {
         LOGGER.debug("Registry building");
         final Map<String, Object> registryBeans = context.getBeansWithAnnotation(ServerRegistry.class);
         final RegistryBuilder builder = Registry.builder();
@@ -80,6 +80,7 @@ public class HandlerDispatcherConfig {
             builder.add(entry.getValue());
         });
         builder.add(objectMapper());
+        builder.add(errorHandler);
         return builder;
     }
 

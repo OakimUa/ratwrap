@@ -1,7 +1,7 @@
 package de.zalando.mass.ratwrap;
 
 import de.zalando.mass.ratwrap.config.EnableRatpack;
-import de.zalando.mass.ratwrap.controller.AnotherTestRegistryBean;
+import de.zalando.mass.ratwrap.bean.AnotherTestRegistryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

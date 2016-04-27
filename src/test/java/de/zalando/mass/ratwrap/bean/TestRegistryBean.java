@@ -1,4 +1,4 @@
-package de.zalando.mass.ratwrap.controller;
+package de.zalando.mass.ratwrap.bean;
 
 import de.zalando.mass.ratwrap.annotation.ServerRegistry;
 import org.springframework.stereotype.Component;

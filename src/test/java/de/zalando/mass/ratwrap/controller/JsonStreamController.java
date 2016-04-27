@@ -1,5 +1,6 @@
 package de.zalando.mass.ratwrap.controller;
 
+import de.zalando.mass.ratwrap.Utils;
 import de.zalando.mass.ratwrap.annotation.RequestController;
 import de.zalando.mass.ratwrap.annotation.RequestHandler;
 import de.zalando.mass.ratwrap.data.InputData;
