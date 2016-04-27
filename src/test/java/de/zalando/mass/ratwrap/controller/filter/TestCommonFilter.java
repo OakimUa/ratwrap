@@ -1,4 +1,4 @@
-package de.zalando.mass.ratwrap.controller;
+package de.zalando.mass.ratwrap.controller.filter;
 
 import de.zalando.mass.ratwrap.filter.RequestFilter;
 import org.slf4j.Logger;

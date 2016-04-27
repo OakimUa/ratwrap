@@ -5,7 +5,7 @@ import de.zalando.mass.ratwrap.annotation.ContextParam;
 import de.zalando.mass.ratwrap.annotation.Filtered;
 import de.zalando.mass.ratwrap.annotation.RequestController;
 import de.zalando.mass.ratwrap.annotation.RequestHandler;
-import de.zalando.mass.ratwrap.controller.TestNotBeanFilter;
+import de.zalando.mass.ratwrap.controller.filter.TestNotBeanFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -2,6 +2,8 @@ package de.zalando.mass.ratwrap.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.zalando.mass.ratwrap.annotation.*;
+import de.zalando.mass.ratwrap.bean.AnotherTestRegistryBean;
+import de.zalando.mass.ratwrap.bean.TestRegistryBean;
 import de.zalando.mass.ratwrap.data.InputData;
 import de.zalando.mass.ratwrap.handler.HandlerDispatcher;
 import de.zalando.mass.ratwrap.enums.RequestMethod;

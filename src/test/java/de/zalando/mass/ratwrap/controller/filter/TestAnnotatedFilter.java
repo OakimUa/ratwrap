@@ -1,4 +1,4 @@
-package de.zalando.mass.ratwrap.controller;
+package de.zalando.mass.ratwrap.controller.filter;
 
 import de.zalando.mass.ratwrap.annotation.FilterUri;
 import de.zalando.mass.ratwrap.filter.RequestFilter;
